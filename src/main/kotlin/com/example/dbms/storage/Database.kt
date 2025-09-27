@@ -34,6 +34,18 @@ class Database {
         tables[normalizedName] = newTable
         println("テーブル '$tableName' を作成しました")
     }
+
+    // データの挿入
+    // @param statement INSERT文のAST
+    fun insertData(statement: InsertStatement) {
+        val tableName = statement.tableName
+        val table = getTable(tableName)
+            ?: throw DatabaseException("テーブル '$tableName' は存在しません")
+            
+        table.insertRow(statement.values)
+        println("テーブル '$tableName' にデータを挿入しました")
+    }
+
 }
 /**
  * データベース例外

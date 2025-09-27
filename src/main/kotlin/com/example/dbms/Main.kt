@@ -66,6 +66,10 @@ class REPL {
                             database.createTable(ast)
                             println("✅ テーブル作成完了")
                         }
+                        is com.example.dbms.parser.InsertStatement -> {
+                            database.insertData(ast)
+                            println("✅ データ挿入完了")
+                        }
                         else -> {
                             println("⚠️  この種類のSQL文はまだ実装されていません: ${ast::class.simpleName}")
                         }
