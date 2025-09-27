@@ -1,0 +1,12 @@
+{
+  "tables": {
+    "users": {
+      "tableName": "users",
+      "columns": [
+        {"name": "id", "type": "INT"},
+        {"name": "name", "type": "VARCHAR(50)"}
+      ],
+      "rowCount": 2
+    }
+  }
+}

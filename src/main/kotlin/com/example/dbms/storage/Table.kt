@@ -6,7 +6,7 @@ import com.example.dbms.parser.*
  * テーブルスキーマ（テーブル定義情報）
  */
 data class TableSchema(
-    val name: String,
+    val tableName: String,
     val columns: List<ColumnDefinition>
 ) {
     /**
@@ -32,13 +32,16 @@ class Table(statement: CreateTableStatement) {
     val schema: TableSchema = TableSchema(statement.tableName, statement.columns)
     
     // データ行を格納するリスト（Rowオブジェクトで管理）
-    private val rows: MutableList<Row> = mutableListOf()
+    private val _rows: MutableList<Row> = mutableListOf()
+    
+    // 外部からアクセス可能なrows（読み取り専用）
+    val rows: List<Row> get() = _rows.toList()
 
     /**
      * テーブルの基本情報を表示
      */
     override fun toString(): String {
-        return "Table(name='${schema.name}', columns=${schema.columns.size}, rows=${rows.size}件)"
+        return "Table(name='${schema.tableName}', columns=${schema.columns.size}, rows=${_rows.size}件)"
     }
 
     // データ行の挿入
@@ -71,44 +74,22 @@ class Table(statement: CreateTableStatement) {
 
         // Rowオブジェクトとして追加
         val row = Row(convertedValues)
-        rows.add(row)
+        _rows.add(row)
     }
     
     /**
      * データを検索
      * @param selectedColumns 選択するカラム名のリスト（"*"なら全カラム）
-     * @param whereClause WHERE条件（未実装）
-     * @return 検索結果のマップのリスト
+     * @return 検索結果のRowリスト
      */
-    fun select(selectedColumns: List<String>, whereClause: WhereClause? = null): List<Map<String, Any>> {
-        // WHERE句の処理（簡易実装 - 今回は無視）
-        var filteredRows = rows
-        if (whereClause != null) {
-            println("WHERE句は未実装のため、全件を返します: ${whereClause.condition}")
-        }
-        
-        return filteredRows.map { row ->
-            val result = mutableMapOf<String, Any>()
-            
-            if (selectedColumns.contains("*")) {
-                // 全カラム選択
-                for (i in schema.columns.indices) {
-                    result[schema.columns[i].name] = row.values[i]
-                }
-            } else {
-                // 指定カラム選択
-                for (columnName in selectedColumns) {
-                    val columnIndex = schema.getColumnIndex(columnName)
-                    if (columnIndex == -1) {
-                        throw DatabaseException("カラム '$columnName' は存在しません")
-                    }
-                    result[columnName] = row.values[columnIndex]
-                }
-            }
-            
-            result
-        }
+    fun select(selectedColumns: List<String>): List<Row> {
+        return _rows // 現在はすべての行を返す（簡易実装）
     }
+    
+    /**
+     * テーブルの行数を取得
+     */
+    fun getRowCount(): Int = _rows.size
 }
 
 /**
