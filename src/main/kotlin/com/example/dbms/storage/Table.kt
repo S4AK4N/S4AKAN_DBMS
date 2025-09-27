@@ -73,6 +73,42 @@ class Table(statement: CreateTableStatement) {
         val row = Row(convertedValues)
         rows.add(row)
     }
+    
+    /**
+     * データを検索
+     * @param selectedColumns 選択するカラム名のリスト（"*"なら全カラム）
+     * @param whereClause WHERE条件（未実装）
+     * @return 検索結果のマップのリスト
+     */
+    fun select(selectedColumns: List<String>, whereClause: WhereClause? = null): List<Map<String, Any>> {
+        // WHERE句の処理（簡易実装 - 今回は無視）
+        var filteredRows = rows
+        if (whereClause != null) {
+            println("WHERE句は未実装のため、全件を返します: ${whereClause.condition}")
+        }
+        
+        return filteredRows.map { row ->
+            val result = mutableMapOf<String, Any>()
+            
+            if (selectedColumns.contains("*")) {
+                // 全カラム選択
+                for (i in schema.columns.indices) {
+                    result[schema.columns[i].name] = row.values[i]
+                }
+            } else {
+                // 指定カラム選択
+                for (columnName in selectedColumns) {
+                    val columnIndex = schema.getColumnIndex(columnName)
+                    if (columnIndex == -1) {
+                        throw DatabaseException("カラム '$columnName' は存在しません")
+                    }
+                    result[columnName] = row.values[columnIndex]
+                }
+            }
+            
+            result
+        }
+    }
 }
 
 /**

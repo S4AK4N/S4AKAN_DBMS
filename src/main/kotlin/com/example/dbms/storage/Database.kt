@@ -45,6 +45,17 @@ class Database {
         table.insertRow(statement.values)
         println("テーブル '$tableName' にデータを挿入しました")
     }
+    
+    /**
+     * データを検索
+     */
+    fun select(statement: SelectStatement): List<Map<String, Any>> {
+        val tableName = statement.tableName
+        val table = getTable(tableName)
+            ?: throw DatabaseException("テーブル '$tableName' は存在しません")
+            
+        return table.select(statement.columns, statement.whereClause)
+    }
 
 }
 /**

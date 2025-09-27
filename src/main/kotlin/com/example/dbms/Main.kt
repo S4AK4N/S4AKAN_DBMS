@@ -70,6 +70,20 @@ class REPL {
                             database.insertData(ast)
                             println("✅ データ挿入完了")
                         }
+                        is com.example.dbms.parser.SelectStatement -> {
+                            val results = database.select(ast)
+                            println("✅ データ検索完了")
+                            
+                            // 結果表示
+                            if (results.isEmpty()) {
+                                println("検索結果: 0件")
+                            } else {
+                                println("検索結果: ${results.size}件")
+                                results.forEach { row ->
+                                    println("  $row")
+                                }
+                            }
+                        }
                         else -> {
                             println("⚠️  この種類のSQL文はまだ実装されていません: ${ast::class.simpleName}")
                         }
