@@ -11,6 +11,9 @@ fun main() {
 }
 
 class REPL {
+    // インメモリデータベースのインスタンスを作成
+    private val database = com.example.dbms.storage.Database()
+    
     fun start() {
         println("SQL> を入力してください (quitで終了)")
 
@@ -57,8 +60,16 @@ class REPL {
                     println("構文解析結果:")
                     println("  AST: $ast")
                     
-                    // Step 3: SQL実行（未実装）
-                    println("(SQL実行機能は未実装)")
+                    // Step 3: SQL実行
+                    when (ast) {
+                        is com.example.dbms.parser.CreateTableStatement -> {
+                            database.createTable(ast)
+                            println("✅ テーブル作成完了")
+                        }
+                        else -> {
+                            println("⚠️  この種類のSQL文はまだ実装されていません: ${ast::class.simpleName}")
+                        }
+                    }
                     
                 } catch (e: com.example.dbms.parser.ParseException) {
                     println("構文エラー: ${e.message}")
