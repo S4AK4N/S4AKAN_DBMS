@@ -41,5 +41,24 @@ sealed class DataType{
 
 // WHERE句
 data class WhereClause(
-    val condition: String // 簡易実装
+    val condition: Condition
 )
+
+// 条件式
+sealed class Condition {
+    data class ComparisonCondition(
+        val left: String,      // カラム名
+        val operator: ComparisonOperator,
+        val right: String      // 値（数値または文字列）
+    ) : Condition()
+}
+
+// 比較演算子
+enum class ComparisonOperator(val symbol: String) {
+    EQUALS("="),
+    NOT_EQUALS("<>"),
+    GREATER_THAN(">"),
+    LESS_THAN("<"),
+    GREATER_THAN_OR_EQUAL(">="),
+    LESS_THAN_OR_EQUAL("<=")
+}

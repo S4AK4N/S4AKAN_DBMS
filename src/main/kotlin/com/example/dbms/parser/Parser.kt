@@ -96,8 +96,7 @@ class Parser(private val tokens: List<Token>){
         
         var whereClause: WhereClause? = null
         if (match(TokenType.WHERE)) {
-            val condition = consume(TokenType.IDENTIFIER, "WHERE条件が必要です").value
-            whereClause = WhereClause(condition)
+            whereClause = parseWhereClause()
         }
         
         consume(TokenType.SEMICOLON, "';'が必要です")
@@ -149,6 +148,50 @@ class Parser(private val tokens: List<Token>){
     private fun consume(type: TokenType, message: String): Token {
         if (check(type)) return advance()
         throw ParseException("$message. Got: ${peek().value}")
+    }
+
+    private fun parseWhereClause(): WhereClause {
+        // カラム名を取得
+        val leftColumn = consume(TokenType.IDENTIFIER, "WHERE句のカラム名が必要です").value
+        
+        // 比較演算子を取得
+        val operator = when (peek().type) {
+            TokenType.EQUALS -> {
+                advance()
+                ComparisonOperator.EQUALS
+            }
+            TokenType.NOT_EQUALS -> {
+                advance()
+                ComparisonOperator.NOT_EQUALS
+            }
+            TokenType.GREATER_THAN -> {
+                advance()
+                ComparisonOperator.GREATER_THAN
+            }
+            TokenType.LESS_THAN -> {
+                advance()
+                ComparisonOperator.LESS_THAN
+            }
+            TokenType.GREATER_EQUAL -> {
+                advance()
+                ComparisonOperator.GREATER_THAN_OR_EQUAL
+            }
+            TokenType.LESS_EQUAL -> {
+                advance()
+                ComparisonOperator.LESS_THAN_OR_EQUAL
+            }
+            else -> throw ParseException("WHERE句で比較演算子が必要です. Got: ${peek().value}")
+        }
+        
+        // 値を取得（文字列または数値）
+        val rightValue = when (peek().type) {
+            TokenType.STRING -> consume(TokenType.STRING, "文字列値が必要です").value
+            TokenType.NUMBER -> consume(TokenType.NUMBER, "数値が必要です").value
+            else -> throw ParseException("WHERE句で値が必要です. Got: ${peek().value}")
+        }
+        
+        val condition = Condition.ComparisonCondition(leftColumn, operator, rightValue)
+        return WhereClause(condition)
     }
 }
 
