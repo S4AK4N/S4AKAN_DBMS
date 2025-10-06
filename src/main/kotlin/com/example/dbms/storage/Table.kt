@@ -1,6 +1,8 @@
 package com.example.dbms.storage
 
 import com.example.dbms.parser.*
+import com.example.dbms.storage.engine.InMemoryStorageEngine
+import com.example.dbms.storage.engine.StorageEngine
 
 /** テーブルスキーマ（テーブル定義情報） */
 data class TableSchema(val tableName: String, val columns: List<ColumnDefinition>) {
@@ -16,20 +18,16 @@ data class TableSchema(val tableName: String, val columns: List<ColumnDefinition
 }
 
 /** インメモリテーブル */
-class Table(statement: CreateTableStatement) {
+class Table(
+        statement: CreateTableStatement,
+        private val storageEngine: StorageEngine = InMemoryStorageEngine()
+) {
     // テーブルスキーマ（構造情報）
     val schema: TableSchema = TableSchema(statement.tableName, statement.columns)
 
-    // データ行を格納するリスト（Rowオブジェクトで管理）
-    private val _rows: MutableList<Row> = mutableListOf()
-
-    // 外部からアクセス可能なrows（読み取り専用）
-    val rows: List<Row>
-        get() = _rows.toList()
-
     /** テーブルの基本情報を表示 */
     override fun toString(): String {
-        return "Table(name='${schema.tableName}', columns=${schema.columns.size}, rows=${_rows.size}件)"
+        return "Table(name='${schema.tableName}', columns=${schema.columns.size}, rows=${storageEngine.rowCount()}件)"
     }
 
     // データ行の挿入
@@ -67,7 +65,7 @@ class Table(statement: CreateTableStatement) {
 
         // Rowオブジェクトとして追加
         val row = Row(convertedValues)
-        _rows.add(row)
+        storageEngine.insert(row)
     }
 
     /**
@@ -76,7 +74,7 @@ class Table(statement: CreateTableStatement) {
      * @return 検索結果のRowリスト
      */
     fun select(@Suppress("UNUSED_PARAMETER") selectedColumns: List<String>): List<Row> {
-        return _rows
+        return storageEngine.scan()
     }
 
     /**
@@ -89,7 +87,7 @@ class Table(statement: CreateTableStatement) {
             @Suppress("UNUSED_PARAMETER") selectedColumns: List<String>,
             whereClause: WhereClause
     ): List<Row> {
-        return _rows.filter { row -> evaluateWhereClause(row, whereClause) }
+        return storageEngine.scan { row -> evaluateWhereClause(row, whereClause) }
     }
 
     /**
@@ -98,11 +96,7 @@ class Table(statement: CreateTableStatement) {
      * @return 更新された行数
      */
     fun update(assignments: Map<String, String>): Int {
-        val updatedCount = _rows.size
-        for (i in _rows.indices) {
-            _rows[i] = updateRow(_rows[i], assignments)
-        }
-        return updatedCount
+        return storageEngine.update(transform = { row -> updateRow(row, assignments) })
     }
 
     /**
@@ -112,14 +106,10 @@ class Table(statement: CreateTableStatement) {
      * @return 更新された行数
      */
     fun update(assignments: Map<String, String>, whereClause: WhereClause): Int {
-        var updatedCount = 0
-        for (i in _rows.indices) {
-            if (evaluateWhereClause(_rows[i], whereClause)) {
-                _rows[i] = updateRow(_rows[i], assignments)
-                updatedCount++
-            }
+        return storageEngine.update(predicate = { row -> evaluateWhereClause(row, whereClause) }) {
+                row ->
+            updateRow(row, assignments)
         }
-        return updatedCount
     }
 
     /**
@@ -127,9 +117,7 @@ class Table(statement: CreateTableStatement) {
      * @return 削除された行数
      */
     fun delete(): Int {
-        val deletedCount = _rows.size
-        _rows.clear()
-        return deletedCount
+        return storageEngine.delete()
     }
 
     /**
@@ -138,25 +126,7 @@ class Table(statement: CreateTableStatement) {
      * @return 削除された行数
      */
     fun delete(whereClause: WhereClause): Int {
-        val rowsToDelete = mutableListOf<Row>()
-        val rowsToKeep = mutableListOf<Row>()
-
-        for (row in _rows) {
-            if (evaluateWhereClause(row, whereClause)) {
-                rowsToDelete.add(row)
-            } else {
-                rowsToKeep.add(row)
-            }
-        }
-
-        val deletedCount = rowsToDelete.size
-
-        if (deletedCount > 0) {
-            _rows.clear()
-            _rows.addAll(rowsToKeep)
-        }
-
-        return deletedCount
+        return storageEngine.delete { row -> evaluateWhereClause(row, whereClause) }
     }
 
     /**
@@ -251,8 +221,5 @@ class Table(statement: CreateTableStatement) {
     }
 
     /** テーブルの行数を取得 */
-    fun getRowCount(): Int = _rows.size
+    fun getRowCount(): Int = storageEngine.rowCount()
 }
-
-/** データ行を表現するクラス */
-data class Row(val values: List<Any>)
