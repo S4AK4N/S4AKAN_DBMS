@@ -135,7 +135,7 @@ class Table(statement: CreateTableStatement) {
         return when (value1) {
             is Int -> {
                 val num2 = value2.toIntOrNull()
-                    ?: throw DatabaseException("数値での比較ができません: '$value2'")
+                    ?: throw DatabaseException("Cannot compare as a number: '$value2'")
                 value1.compareTo(num2)
             }
             is String -> {
