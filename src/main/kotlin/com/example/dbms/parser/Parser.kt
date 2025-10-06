@@ -9,6 +9,7 @@ class Parser(private val tokens: List<Token>) {
             TokenType.INSERT -> parseInsert()
             TokenType.SELECT -> parseSelect()
             TokenType.UPDATE -> parseUpdate()
+            TokenType.DELETE -> parseDelete()
             else -> throw Exception("不明なSQL文: ${peek().value}")
         }
     }
@@ -232,6 +233,24 @@ class Parser(private val tokens: List<Token>) {
 
         val condition = Condition.ComparisonCondition(leftColumn, operator, rightValue)
         return WhereClause(condition)
+    }
+
+    private fun parseDelete(): DeleteStatement {
+        consume(TokenType.DELETE, "DELETEキーワードが必要です")
+        consume(TokenType.FROM, "FROMキーワードが必要です")
+
+        val tableName = consume(TokenType.IDENTIFIER, "テーブル名が必要です").value
+
+        val whereClause =
+                if (match(TokenType.WHERE)) {
+                    parseWhereClause()
+                } else {
+                    null
+                }
+
+        consume(TokenType.SEMICOLON, "';'が必要です")
+
+        return DeleteStatement(tableName, whereClause)
     }
 }
 

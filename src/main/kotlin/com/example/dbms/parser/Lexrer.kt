@@ -17,6 +17,7 @@ class Lexer(private val input: String) {
                         "WHERE" to TokenType.WHERE,
                         "UPDATE" to TokenType.UPDATE,
                         "SET" to TokenType.SET,
+                        "DELETE" to TokenType.DELETE,
                         "INT" to TokenType.INT,
                         "VARCHAR" to TokenType.VARCHAR,
                 )

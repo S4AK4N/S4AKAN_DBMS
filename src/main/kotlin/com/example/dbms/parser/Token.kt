@@ -12,6 +12,7 @@ enum class TokenType {
     WHERE,
     UPDATE,
     SET,
+    DELETE,
 
     // Data types
     INT,

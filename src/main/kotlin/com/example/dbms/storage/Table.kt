@@ -123,6 +123,43 @@ class Table(statement: CreateTableStatement) {
     }
 
     /**
+     * データを削除（WHERE句なし - 全行削除）
+     * @return 削除された行数
+     */
+    fun delete(): Int {
+        val deletedCount = _rows.size
+        _rows.clear()
+        return deletedCount
+    }
+
+    /**
+     * データを削除（WHERE句あり - 条件に一致する行のみ削除）
+     * @param whereClause WHERE句による条件フィルタ
+     * @return 削除された行数
+     */
+    fun delete(whereClause: WhereClause): Int {
+        val rowsToDelete = mutableListOf<Row>()
+        val rowsToKeep = mutableListOf<Row>()
+
+        for (row in _rows) {
+            if (evaluateWhereClause(row, whereClause)) {
+                rowsToDelete.add(row)
+            } else {
+                rowsToKeep.add(row)
+            }
+        }
+
+        val deletedCount = rowsToDelete.size
+
+        if (deletedCount > 0) {
+            _rows.clear()
+            _rows.addAll(rowsToKeep)
+        }
+
+        return deletedCount
+    }
+
+    /**
      * 行を更新する（新しいRowオブジェクトを返す）
      * @param row 更新対象の行
      * @param assignments 更新するカラムと値のマップ

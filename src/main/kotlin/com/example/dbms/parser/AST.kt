@@ -27,6 +27,10 @@ data class SelectStatement(
         val whereClause: WhereClause? = null
 ) : SqlStatement()
 
+// DELETE文
+data class DeleteStatement(val tableName: String, val whereClause: WhereClause? = null) :
+        SqlStatement()
+
 // データ型
 sealed class DataType {
     object IntType : DataType() {
