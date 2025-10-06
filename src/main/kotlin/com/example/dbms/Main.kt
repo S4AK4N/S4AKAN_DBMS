@@ -78,6 +78,10 @@ class REPL {
                             database.update(ast)
                             println("✅ データ更新完了")
                         }
+                        is com.example.dbms.parser.DeleteStatement -> {
+                            database.delete(ast)
+                            println("✅ データ削除完了")
+                        }
                     }
                 } catch (e: com.example.dbms.parser.ParseException) {
                     println("構文エラー: ${e.message}")
