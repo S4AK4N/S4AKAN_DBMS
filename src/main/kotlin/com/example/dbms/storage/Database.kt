@@ -71,7 +71,11 @@ class Database {
             throw DatabaseException("テーブル '${statement.tableName}' が見つかりません")
         }
         
-        val results = table.select(statement.columns)
+        val results = if (statement.whereClause != null) {
+            table.select(statement.columns, statement.whereClause)
+        } else {
+            table.select(statement.columns)
+        }
         displayResults(results, statement.columns, table)
     }
     

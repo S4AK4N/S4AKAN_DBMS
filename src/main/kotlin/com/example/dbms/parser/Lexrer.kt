@@ -47,6 +47,25 @@ class Lexer(private val input: String){
             ';' -> Token(TokenType.SEMICOLON, ";", start)
             '*' -> Token(TokenType.ASTERISK, "*", start)
             '=' -> Token(TokenType.EQUALS, "=", start)
+            '<' -> {
+                if (peek() == '>') {
+                    advance()
+                    Token(TokenType.NOT_EQUALS, "<>", start)
+                } else if (peek() == '=') {
+                    advance()
+                    Token(TokenType.LESS_EQUAL, "<=", start)
+                } else {
+                    Token(TokenType.LESS_THAN, "<", start)
+                }
+            }
+            '>' -> {
+                if (peek() == '=') {
+                    advance()
+                    Token(TokenType.GREATER_EQUAL, ">=", start)
+                } else {
+                    Token(TokenType.GREATER_THAN, ">", start)
+                }
+            }
             '\'' -> scanString()
             in '0'..'9' -> scanNumber()
             in 'a'..'z', in 'A'..'Z', '_' -> scanIdentifierOrKeyword()

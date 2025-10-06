@@ -78,12 +78,71 @@ class Table(statement: CreateTableStatement) {
     }
     
     /**
-     * データを検索
+     * データを検索（WHERE句なし）
      * @param selectedColumns 選択するカラム名のリスト（"*"なら全カラム）
      * @return 検索結果のRowリスト
      */
-    fun select(selectedColumns: List<String>): List<Row> {
-        return _rows // 現在はすべての行を返す（簡易実装）
+    fun select(@Suppress("UNUSED_PARAMETER") selectedColumns: List<String>): List<Row> {
+        return _rows
+    }
+
+    /**
+     * データを検索（WHERE句あり）
+     * @param selectedColumns 選択するカラム名のリスト（"*"なら全カラム）
+     * @param whereClause WHERE句による条件フィルタ
+     * @return 検索結果のRowリスト
+     */
+    fun select(@Suppress("UNUSED_PARAMETER") selectedColumns: List<String>, whereClause: WhereClause): List<Row> {
+        return _rows.filter { row -> evaluateWhereClause(row, whereClause) }
+    }
+
+    /**
+     * WHERE句の条件を評価
+     * @param row 評価対象の行
+     * @param whereClause WHERE句
+     * @return 条件に一致するかどうか
+     */
+    private fun evaluateWhereClause(row: Row, whereClause: WhereClause): Boolean {
+        return when (val condition = whereClause.condition) {
+            is Condition.ComparisonCondition -> {
+                val columnIndex = schema.getColumnIndex(condition.left)
+                if (columnIndex == -1) {
+                    throw DatabaseException("カラム '${condition.left}' が見つかりません")
+                }
+                
+                val columnValue = row.values[columnIndex]
+                val targetValue = condition.right
+                
+                when (condition.operator) {
+                    ComparisonOperator.EQUALS -> compareValues(columnValue, targetValue) == 0
+                    ComparisonOperator.NOT_EQUALS -> compareValues(columnValue, targetValue) != 0
+                    ComparisonOperator.GREATER_THAN -> compareValues(columnValue, targetValue) > 0
+                    ComparisonOperator.LESS_THAN -> compareValues(columnValue, targetValue) < 0
+                    ComparisonOperator.GREATER_THAN_OR_EQUAL -> compareValues(columnValue, targetValue) >= 0
+                    ComparisonOperator.LESS_THAN_OR_EQUAL -> compareValues(columnValue, targetValue) <= 0
+                }
+            }
+        }
+    }
+
+    /**
+     * 値を比較する（型を考慮）
+     * @param value1 カラムの値
+     * @param value2 比較対象の値（文字列）
+     * @return 比較結果 (-1: value1 < value2, 0: 等しい, 1: value1 > value2)
+     */
+    private fun compareValues(value1: Any, value2: String): Int {
+        return when (value1) {
+            is Int -> {
+                val num2 = value2.toIntOrNull()
+                    ?: throw DatabaseException("Cannot compare as a number: '$value2'")
+                value1.compareTo(num2)
+            }
+            is String -> {
+                value1.compareTo(value2)
+            }
+            else -> throw DatabaseException("比較できない型です: ${value1::class}")
+        }
     }
     
     /**

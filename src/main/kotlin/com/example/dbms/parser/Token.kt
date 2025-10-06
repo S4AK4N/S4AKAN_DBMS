@@ -20,6 +20,11 @@ enum class TokenType {
     SEMICOLON,       // ;
     ASTERISK,        // *
     EQUALS,          // =
+    NOT_EQUALS,      // <>
+    GREATER_THAN,    // >
+    LESS_THAN,       // <
+    GREATER_EQUAL,   // >=
+    LESS_EQUAL,      // <=
 
     // Special
     EOF,              // 入力の終わり
