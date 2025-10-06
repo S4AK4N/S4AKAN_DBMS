@@ -86,6 +86,25 @@ class Database {
         saveToFile() // 自動保存
     }
 
+    /** DELETE文を実行 */
+    fun delete(statement: DeleteStatement) {
+        val table = getTable(statement.tableName)
+        if (table == null) {
+            throw DatabaseException("テーブル '${statement.tableName}' が見つかりません")
+        }
+
+        val deletedCount =
+                if (statement.whereClause != null) {
+                    table.delete(statement.whereClause)
+                } else {
+                    table.delete()
+                }
+
+        println("$deletedCount 行を '${statement.tableName}' から削除しました")
+
+        saveToFile() // 自動保存
+    }
+
     /** テーブルを取得（内部用） */
     private fun getTable(tableName: String): Table? {
         val normalizedName = tableName.lowercase()
