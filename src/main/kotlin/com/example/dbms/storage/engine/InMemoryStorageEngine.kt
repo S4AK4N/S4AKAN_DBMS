@@ -9,27 +9,27 @@ class InMemoryStorageEngine : StorageEngine {
         rows.add(row)
     }
 
-    override fun scan(predicate: ((Row) -> Boolean)?): List<Row> {
-        if (predicate == null) {
+    override fun scanRows(filter: RowFilter): List<Row> {
+        if (filter === RowFilter.All) {
             return rows.toList()
         }
-        return rows.filter(predicate)
+        return rows.filter { row -> filter.matches(row) }
     }
 
-    override fun update(predicate: ((Row) -> Boolean)?, transform: (Row) -> Row): Int {
+    override fun update(filter: RowFilter, updater: RowUpdater): Int {
         var updated = 0
         for (index in rows.indices) {
             val current = rows[index]
-            if (predicate == null || predicate(current)) {
-                rows[index] = transform(current)
+            if (filter === RowFilter.All || filter.matches(current)) {
+                rows[index] = updater.apply(current)
                 updated++
             }
         }
         return updated
     }
 
-    override fun delete(predicate: ((Row) -> Boolean)?): Int {
-        if (predicate == null) {
+    override fun delete(filter: RowFilter): Int {
+        if (filter === RowFilter.All) {
             val count = rows.size
             rows.clear()
             return count
@@ -39,7 +39,7 @@ class InMemoryStorageEngine : StorageEngine {
         val iterator = rows.iterator()
         while (iterator.hasNext()) {
             val row = iterator.next()
-            if (predicate(row)) {
+            if (filter.matches(row)) {
                 iterator.remove()
                 removed++
             }

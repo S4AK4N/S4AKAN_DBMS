@@ -11,25 +11,25 @@ interface StorageEngine {
     fun insert(row: Row)
 
     /**
-     * 行を読み取る。
-     * @param predicate nullの場合は全行、それ以外は条件に一致する行のみ返す。
+     * 行を走査して取得する。
+     * @param filter [RowFilter.All] の場合は全行、それ以外は条件に一致する行のみ返す。
      */
-    fun scan(predicate: ((Row) -> Boolean)? = null): List<Row>
+    fun scanRows(filter: RowFilter = RowFilter.All): List<Row>
 
     /**
      * 行を更新する。
-     * @param predicate nullの場合は全行、それ以外は条件に一致する行のみ対象。
-     * @param transform 更新後の行を生成する変換関数。
+     * @param filter [RowFilter.All] の場合は全行、それ以外は条件に一致する行のみ対象。
+     * @param updater 更新後の行を生成する変換を表現する。
      * @return 更新された行数。
      */
-    fun update(predicate: ((Row) -> Boolean)? = null, transform: (Row) -> Row): Int
+    fun update(filter: RowFilter = RowFilter.All, updater: RowUpdater): Int
 
     /**
      * 行を削除する。
-     * @param predicate nullの場合は全行、それ以外は条件に一致する行のみ削除。
+     * @param filter [RowFilter.All] の場合は全行、それ以外は条件に一致する行のみ削除。
      * @return 削除された行数。
      */
-    fun delete(predicate: ((Row) -> Boolean)? = null): Int
+    fun delete(filter: RowFilter = RowFilter.All): Int
 
     fun rowCount(): Int
 }

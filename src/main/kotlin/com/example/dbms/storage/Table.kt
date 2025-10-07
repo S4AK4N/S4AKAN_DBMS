@@ -2,6 +2,8 @@ package com.example.dbms.storage
 
 import com.example.dbms.parser.*
 import com.example.dbms.storage.engine.InMemoryStorageEngine
+import com.example.dbms.storage.engine.RowFilter
+import com.example.dbms.storage.engine.RowUpdater
 import com.example.dbms.storage.engine.StorageEngine
 
 /** テーブルスキーマ（テーブル定義情報） */
@@ -74,7 +76,7 @@ class Table(
      * @return 検索結果のRowリスト
      */
     fun select(@Suppress("UNUSED_PARAMETER") selectedColumns: List<String>): List<Row> {
-        return storageEngine.scan()
+        return storageEngine.scanRows()
     }
 
     /**
@@ -87,7 +89,7 @@ class Table(
             @Suppress("UNUSED_PARAMETER") selectedColumns: List<String>,
             whereClause: WhereClause
     ): List<Row> {
-        return storageEngine.scan { row -> evaluateWhereClause(row, whereClause) }
+        return storageEngine.scanRows(createRowFilter(whereClause))
     }
 
     /**
@@ -96,7 +98,7 @@ class Table(
      * @return 更新された行数
      */
     fun update(assignments: Map<String, String>): Int {
-        return storageEngine.update(transform = { row -> updateRow(row, assignments) })
+        return storageEngine.update(updater = createRowUpdater(assignments))
     }
 
     /**
@@ -106,10 +108,10 @@ class Table(
      * @return 更新された行数
      */
     fun update(assignments: Map<String, String>, whereClause: WhereClause): Int {
-        return storageEngine.update(predicate = { row -> evaluateWhereClause(row, whereClause) }) {
-                row ->
-            updateRow(row, assignments)
-        }
+        return storageEngine.update(
+                filter = createRowFilter(whereClause),
+                updater = createRowUpdater(assignments)
+        )
     }
 
     /**
@@ -126,7 +128,7 @@ class Table(
      * @return 削除された行数
      */
     fun delete(whereClause: WhereClause): Int {
-        return storageEngine.delete { row -> evaluateWhereClause(row, whereClause) }
+        return storageEngine.delete(createRowFilter(whereClause))
     }
 
     /**
@@ -167,6 +169,18 @@ class Table(
         }
 
         return Row(newValues)
+    }
+
+    private fun createRowFilter(whereClause: WhereClause): RowFilter {
+        return object : RowFilter {
+            override fun matches(row: Row): Boolean = evaluateWhereClause(row, whereClause)
+        }
+    }
+
+    private fun createRowUpdater(assignments: Map<String, String>): RowUpdater {
+        return object : RowUpdater {
+            override fun apply(row: Row): Row = updateRow(row, assignments)
+        }
     }
 
     /**
