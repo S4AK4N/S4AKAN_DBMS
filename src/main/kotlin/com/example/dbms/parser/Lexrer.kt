@@ -1,22 +1,26 @@
 package com.example.dbms.parser
 
-class Lexer(private val input: String){
+class Lexer(private val input: String) {
     private var position: Int = 0
     private val length: Int = input.length
 
     companion object {
-        private val KEYWORDS = mapOf(
-            "CREATE" to TokenType.CREATE,
-            "TABLE" to TokenType.TABLE,
-            "INSERT" to TokenType.INSERT,
-            "INTO" to TokenType.INTO,
-            "VALUES" to TokenType.VALUES,
-            "SELECT" to TokenType.SELECT,
-            "FROM" to TokenType.FROM,
-            "WHERE" to TokenType.WHERE,
-            "INT" to TokenType.INT,
-            "VARCHAR" to TokenType.VARCHAR,
-        )
+        private val KEYWORDS =
+                mapOf(
+                        "CREATE" to TokenType.CREATE,
+                        "TABLE" to TokenType.TABLE,
+                        "INSERT" to TokenType.INSERT,
+                        "INTO" to TokenType.INTO,
+                        "VALUES" to TokenType.VALUES,
+                        "SELECT" to TokenType.SELECT,
+                        "FROM" to TokenType.FROM,
+                        "WHERE" to TokenType.WHERE,
+                        "UPDATE" to TokenType.UPDATE,
+                        "SET" to TokenType.SET,
+                        "DELETE" to TokenType.DELETE,
+                        "INT" to TokenType.INT,
+                        "VARCHAR" to TokenType.VARCHAR,
+                )
     }
 
     fun tokenize(): List<Token> {
@@ -29,9 +33,9 @@ class Lexer(private val input: String){
             val token = nextToken()
             if (token.type != TokenType.UNKNOWN) {
                 tokens.add(token)
-            }    
+            }
         }
-        
+
         tokens.add(Token(TokenType.EOF, "", position))
         return tokens
     }
@@ -47,6 +51,25 @@ class Lexer(private val input: String){
             ';' -> Token(TokenType.SEMICOLON, ";", start)
             '*' -> Token(TokenType.ASTERISK, "*", start)
             '=' -> Token(TokenType.EQUALS, "=", start)
+            '<' -> {
+                if (peek() == '>') {
+                    advance()
+                    Token(TokenType.NOT_EQUALS, "<>", start)
+                } else if (peek() == '=') {
+                    advance()
+                    Token(TokenType.LESS_EQUAL, "<=", start)
+                } else {
+                    Token(TokenType.LESS_THAN, "<", start)
+                }
+            }
+            '>' -> {
+                if (peek() == '=') {
+                    advance()
+                    Token(TokenType.GREATER_EQUAL, ">=", start)
+                } else {
+                    Token(TokenType.GREATER_THAN, ">", start)
+                }
+            }
             '\'' -> scanString()
             in '0'..'9' -> scanNumber()
             in 'a'..'z', in 'A'..'Z', '_' -> scanIdentifierOrKeyword()
@@ -61,11 +84,11 @@ class Lexer(private val input: String){
         while (!isAtEnd() && peek() != '\'') {
             value.append(advance())
         }
-        
+
         if (isAtEnd()) {
             return Token(TokenType.UNKNOWN, value.toString(), start)
         }
-        
+
         advance() // 閉じるシングルクォートを消費
         return Token(TokenType.STRING, value.toString(), start)
     }
@@ -107,5 +130,4 @@ class Lexer(private val input: String){
             advance()
         }
     }
-
 }
