@@ -3,7 +3,7 @@ package com.example.dbms
 fun main() {
     println("=== 自作DBMS ステップ0 ===")
     println("インメモリDB with REPL")
-    println("サポートするSQL: CREATE TABLE, INSERT, SELECT")
+    println("サポートするSQL: CREATE TABLE, INSERT, SELECT, UPDATE, DELETE")
     println()
 
     val repl = REPL()
